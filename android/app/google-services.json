@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1098926898776",
+    "project_id": "anochat-fe3fc",
+    "storage_bucket": "anochat-fe3fc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098926898776:android:1a6d2772e64eac1269d42d",
+        "android_client_info": {
+          "package_name": "com.example.anochat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1098926898776-j0pcpvarnqf0o7hgmkncqo4a0506el39.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAoKODCQrNOQ5lSoZORmWRCfAXzpu8j6Rs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1098926898776-j0pcpvarnqf0o7hgmkncqo4a0506el39.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
