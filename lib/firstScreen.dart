@@ -1,9 +1,11 @@
 import 'dart:math';
 
+import 'package:anochat/controller.dart';
 import 'package:anochat/main.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FirstScreen extends StatefulWidget {
   // const FirstScreen({super.key});
@@ -72,12 +74,35 @@ var news = "";
    
   }
 
+  final Controllerss controllers= Get.put(Controllerss()); 
+
+         Future<String> generateUniqueId() async {
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final random =await Random();
+
+               await prefs.setString('action', "${random.nextInt(1000)}");
+               controllers.action = "${random.nextInt(10000)}";
+               controllers.update();
+               print(random.nextInt(10000));
+    return '${random.nextInt(10000)}';
+  }
 
 
 class _FirstScreenState extends State<FirstScreen> {
+@override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+       generateUniqueId();
 
-  @override
+
+
+  }
+
+
   Widget build(BuildContext context) {
+
+    
     return Scaffold(
       body: 
       Container(

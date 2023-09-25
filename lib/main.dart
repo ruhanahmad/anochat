@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:anochat/controller.dart';
 import 'package:anochat/firstScreen.dart';
 import 'package:anochat/newfile.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -17,13 +18,17 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record_mp3/record_mp3.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+ 
+ 
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
@@ -31,11 +36,25 @@ class MyApp extends StatelessWidget {
       ChatScreen(),
     );
   }
+
+
 }
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+   
+
+
+
   @override
   Widget build(BuildContext context) {
+    
+    
     return Scaffold(
       appBar: AppBar(
         title: Text('Chat App'),
@@ -57,19 +76,23 @@ class _ChatRoomState extends State<ChatRoom> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final CollectionReference _messages = FirebaseFirestore.instance.collection('messages');
   final CollectionReference _code = FirebaseFirestore.instance.collection('code');
-    
+   SharedPreferences? prefs;
   
 
 
   
 
  AudioPlayer audioPlayer = AudioPlayer();
-  void _sendMessage(String message) {
+  void _sendMessage(String message)async {
+
     _code.doc(widget.news).collection("message").add({
       'text': message,
       'timestamp': FieldValue.serverTimestamp(),
        'image_url': "",
+       "audio":"",
+       "id":controllers.action
     });
+        print("SADAS  +${controllers.action}");
     _textController.clear();
   }
 
@@ -119,14 +142,20 @@ Future<String> uploadImageToStorage(File imageFile) async {
   return imageUrl;
 }
 
+ 
+
 final FirebaseFirestore firestore = FirebaseFirestore.instance;
 String recordFilePath="";
-void sendMessageWithImage(String imageUrl) {
+void sendMessageWithImage(String imageUrl) async{
+
    _code.doc(widget.news).collection("message").add({
       'text': "",
       'timestamp': FieldValue.serverTimestamp(),
        'image_url': imageUrl,
+       "audio":"",
+       "id":controllers.action
     });
+
 }
   bool isRecording = false;
     void startRecord() async {
@@ -196,12 +225,14 @@ bool  isPlayingMsg = false;
 
 
   sendAudioMsg(String audioMsg) async {
+
     if (audioMsg.isNotEmpty) {
       _code.doc(widget.news).collection("message").add({
       'text': "",
       'timestamp': FieldValue.serverTimestamp(),
        'image_url': "",
-       "audio":audioMsg
+       "audio":audioMsg,
+       "id":controllers.action
     })
       .then((value) {
         setState(() {
@@ -265,10 +296,26 @@ bool  isPlayingMsg = false;
   //   }
   }
 
+         final Controllerss controllers= Get.put(Controllerss()); 
+  void getShared()async {
+  prefs = await SharedPreferences.getInstance();
+  controllers.action = await prefs!.getString('action');
+}
+
   @override
   Widget build(BuildContext context) {
+      @override
+void initState() {
+    // TODO: implement initState
+    super.initState();
+getShared();
+
+  }
+
+        
+
     return Scaffold(
-      appBar: AppBar(title: Text("Chat Screen ${news}"),
+      appBar: AppBar(title: Text("Chat Screen ${news} Long press to stop recording "),
       automaticallyImplyLeading: false,
       
       ),
@@ -292,42 +339,60 @@ bool  isPlayingMsg = false;
                 // }
                 return 
               ListView.builder(
-      itemCount: messages.length,
-      itemBuilder: (context, index) {
-          final userDoc = messages[index];
-        // final messageData = messages[index].data();
-      final isImageMessage = userDoc['image_url'] ;
-      final audio = userDoc["audio"];
-
-    if(isImageMessage != ""){
-  return   Container(
-              height: 300,
-              width: MediaQuery.of(context).size.width,
-              child: Image.network(userDoc['image_url'],fit: BoxFit.fill,));
-    }
-    else if(audio != "") {
-      return
-       Padding(
-        padding: EdgeInsets.only(
-            top: 8,
-        
+                itemCount: messages.length,
+                itemBuilder: (context, index) {
+            final userDoc = messages[index];
+                  // final messageData = messages[index].data();
+                final isImageMessage = userDoc['image_url'] ;
+                final audio = userDoc["audio"];
+                
+                  if(isImageMessage != ""){
+                return   Column(
+                  children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+            height: 500,width: 500,
+                       decoration: BoxDecoration(image: DecorationImage(image: NetworkImage(userDoc["image_url"]),fit: BoxFit.contain)),
+            
             ),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.5,
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
+                ),
+                
+                  ],
+                );
+                  }
+                  else if(audio != "") {
+                return
+                 Padding(
+                  padding: EdgeInsets.only(
+            top: 8,
+                  
+            ),
+                  child: Container(
+            width: MediaQuery.of(context).size.width * 0.5,
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
             color: 
-               
-                Colors.orangeAccent,
+               isPlayingMsg==false ?
+                Colors.orangeAccent : Colors.purple ,
             borderRadius: BorderRadius.circular(10),
-          ),
-          child: GestureDetector(
+            ),
+            child: GestureDetector(
               onTap: () {
-       //         _loadFile(audio);
-
-       audioPlayer.play(UrlSource(audio));
+                 //         _loadFile(audio);
+                
+                 setState(() {
+                   isPlayingMsg =true;
+                 });
+                
+                
+                 audioPlayer.play(UrlSource(audio));
               },
-              onSecondaryTap: () {
+              onDoubleTap: () {
+                setState(() {
+                   isPlayingMsg = false;
+                });
+               
                 stopRecord();
               },
               child: Row(
@@ -336,7 +401,8 @@ bool  isPlayingMsg = false;
                 children: [
                   Row(
                     children: [
-                      Icon(isPlayingMsg ? Icons.cancel : Icons.play_arrow),
+                      Icon(isPlayingMsg==false
+                       ? Icons.cancel : Icons.play_arrow),
                       // Text(
                       //   'Audio-${doc['timestamp']}',
                       //   maxLines: 10,
@@ -349,29 +415,38 @@ bool  isPlayingMsg = false;
                   // )
                 ],
               )),
-        ),
-      );
-      
-    }
-
-    else {
-   return   Text(userDoc['text']);
-    }
-
-      
-        
-        
-        
-        //  isImageMessage != ""
-        //     ? 
-        //     Container(
-        //       height: 300,
-        //       width: MediaQuery.of(context).size.width,
-        //       child: Image.network(userDoc['image_url'],fit: BoxFit.fill,))
-        //     : Text(userDoc['text']);
-      },
-    );
-  },
+                  ),
+                );
+                
+                  }
+                
+                  else {
+                 return   Padding(
+                   padding: const EdgeInsets.all(8.0),
+                   child: Container(
+                 
+                     color:userDoc["id"] == controllers.action ? Colors.greenAccent:Colors.orange,
+                     child: Padding(
+                       padding: const EdgeInsets.all(8.0),
+                       child: Text( userDoc['text'],textAlign: userDoc["id"] == controllers.action ? TextAlign.right : TextAlign.left,style: TextStyle(fontSize: 30,),),
+                     )),
+                 );
+                  }
+                
+                
+                  
+                  
+                  
+                  //  isImageMessage != ""
+                  //     ? 
+                  //     Container(
+                  //       height: 300,
+                  //       width: MediaQuery.of(context).size.width,
+                  //       child: Image.network(userDoc['image_url'],fit: BoxFit.fill,))
+                  //     : Text(userDoc['text']);
+                },
+                  );
+                },
               
             ),
           ),
@@ -397,7 +472,7 @@ bool  isPlayingMsg = false;
                    pickImageFromGallery();
                   },
                 ),
-
+      
                  IconButton(
                   icon: Icon(Icons.camera),
                   onPressed: () {
@@ -422,13 +497,29 @@ bool  isPlayingMsg = false;
                                   spreadRadius: 4)
                             ], color: Colors.pink, shape: BoxShape.circle),
                             child: GestureDetector(
-                              onLongPress: () {
+                              onTap: () {
+                           Get.snackbar(
+        "Success",
+        "Recording in Progress,Kindly long press button again to stop recording",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: Duration(milliseconds: 1000)
+      );
                                 startRecord();
                                 setState(() {
                                   isRecording = true;
                                 });
                               },
-                              onLongPressEnd: (details) {
+                             onLongPressEnd: (details) {
+                                     Get.snackbar(
+        "End",
+        "Recording End",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+         duration: Duration(milliseconds: 1000)
+      );
                                 stopRecord();
                                 setState(() {
                                   isRecording = false;
@@ -436,11 +527,20 @@ bool  isPlayingMsg = false;
                               },
                               child: Container(
                                   padding: EdgeInsets.all(10),
-                                  child: Icon(
+                                  child: isRecording == false ? 
+                                  Icon(
                                     Icons.mic,
                                     color: Colors.white,
                                     size: 20,
-                                  )),
+                                  ):
+                                     Icon(
+                                    Icons.mic_external_off,
+                                    color: Colors.white,
+                                    size: 20,
+                                  )
+                                
+                                  
+                                  ),
                             )),
               ],
             ),
